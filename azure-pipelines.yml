@@ -1,0 +1,65 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  major: 1
+  minor: 0
+  patch: $[counter('hello-world-patch', 0)]
+  appVersion: '$(major).$(minor).$(patch)'
+  buildConfiguration: Release
+
+steps:
+  - checkout: self
+
+  - task: UseDotNet@2
+    displayName: Install .NET 8 SDK
+    inputs:
+      packageType: sdk
+      version: '8.0.x'
+
+  - script: |
+      echo "Building application version: $(appVersion)"
+    displayName: Print application version
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore dependencies
+    inputs:
+      command: restore
+      projects: 'HelloWorld/HelloWorld.csproj'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build application
+    inputs:
+      command: build
+      projects: 'HelloWorld/HelloWorld.csproj'
+      arguments: '--configuration $(buildConfiguration) --no-restore -p:Version=$(appVersion)'
+
+  - task: DotNetCoreCLI@2
+    displayName: Publish application
+    inputs:
+      command: publish
+      publishWebProjects: false
+      projects: 'HelloWorld/HelloWorld.csproj'
+      arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory) -p:Version=$(appVersion)'
+      zipAfterPublish: false
+      modifyOutputPath: false
+
+  - script: |
+      dotnet $(Build.ArtifactStagingDirectory)/HelloWorld.dll
+    displayName: Run application and show version
+
+  - task: UniversalPackages@0
+    displayName: Upload application to Azure Artifacts
+    inputs:
+      command: publish
+      publishDirectory: '$(Build.ArtifactStagingDirectory)'
+      vstsFeedPublish: 'azure-devops-dotnet-project/hello-world-feed'
+      vstsFeedPackagePublish: 'hello-world'
+      versionOption: custom
+      versionPublish: '$(appVersion)'
+      packagePublishDescription: '.NET Hello World application'
