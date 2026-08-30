@@ -29,8 +29,10 @@ steps:
       projectKey: 'azure-devops-dotnet-project'
       projectName: 'azure-devops-dotnet-project'
       projectVersion: '$(appVersion)'
-    env:
-      BUILD_SOURCEBRANCH: 'refs/heads/master'
+  - bash: |
+      FILTERED_PARAMS=$(python3 -c 'import json, os; p=json.loads(os.environ["SONARQUBE_SCANNER_PARAMS"]); p.pop("sonar.branch.name", None); print(json.dumps(p, separators=(",", ":")))')
+      echo "##vso[task.setvariable variable=SONARQUBE_SCANNER_PARAMS]$FILTERED_PARAMS"
+    displayName: Remove unsupported SonarQube branch parameter
   - script: |
       echo "Building application version: $(appVersion)"
     displayName: Print application version
