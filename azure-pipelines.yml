@@ -72,6 +72,19 @@ steps:
       dotnet $(Build.ArtifactStagingDirectory)/HelloWorld.dll
     displayName: Run application and show version
 
+  - bash: |
+      BRANCH_NAME="${BUILD_SOURCEBRANCH#refs/heads/}"
+      SAFE_BRANCH_NAME="${BRANCH_NAME//\//-}"
+      ARTIFACT_TAG="${SAFE_BRANCH_NAME}_$(appVersion)"
+
+      echo "Application version: $(appVersion)"
+      echo "Artifact name: ${ARTIFACT_TAG}"
+
+      echo "##vso[task.setvariable variable=artifactTag]${ARTIFACT_TAG}"
+      echo "##vso[build.addbuildtag]${ARTIFACT_TAG}"
+    displayName: Create branch-version tag
+
+
   - script: |
       dotnet pack HelloWorld/HelloWorld.csproj \
         --configuration $(buildConfiguration) \
@@ -87,3 +100,10 @@ steps:
       packagesToPush: '$(Build.ArtifactStagingDirectory)/nuget/*.nupkg'
       nuGetFeedType: internal
       publishVstsFeed: 'azure-devops-dotnet-project/hello-world-feed'
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish tagged NuGet artifact
+    inputs:
+      targetPath: '$(Build.ArtifactStagingDirectory)/nuget'
+      artifact: '$(artifactTag)'
+      publishLocation: pipeline
