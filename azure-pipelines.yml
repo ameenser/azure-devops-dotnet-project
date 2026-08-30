@@ -107,3 +107,16 @@ steps:
       targetPath: '$(Build.ArtifactStagingDirectory)/nuget'
       artifact: '$(artifactTag)'
       publishLocation: pipeline
+  - bash: |
+      echo "Pipeline status: SUCCESS"
+      echo "Build number: $(Build.BuildNumber)"
+      echo "Application version: $(appVersion)"
+    displayName: Report successful pipeline status
+    condition: succeeded()
+
+  - bash: |
+      echo "Pipeline status: FAILURE"
+      echo "Build number: $(Build.BuildNumber)"
+      echo "Application version: $(appVersion)"
+    displayName: Report failed pipeline status
+    condition: failed()
