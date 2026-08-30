@@ -29,7 +29,8 @@ steps:
       projectKey: 'azure-devops-dotnet-project'
       projectName: 'azure-devops-dotnet-project'
       projectVersion: '$(appVersion)'
-
+    env:
+      BUILD_SOURCEBRANCH: 'refs/heads/master'
   - script: |
       echo "Building application version: $(appVersion)"
     displayName: Print application version
