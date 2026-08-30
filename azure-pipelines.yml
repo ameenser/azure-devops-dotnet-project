@@ -72,13 +72,18 @@ steps:
       dotnet $(Build.ArtifactStagingDirectory)/HelloWorld.dll
     displayName: Run application and show version
 
-  - task: UniversalPackages@0
-    displayName: Upload application to Azure Artifacts
+  - script: |
+      dotnet pack HelloWorld/HelloWorld.csproj \
+        --configuration $(buildConfiguration) \
+        --no-build \
+        --output $(Build.ArtifactStagingDirectory)/nuget \
+        -p:PackageVersion=$(appVersion)
+    displayName: Create NuGet package from DLL
+
+  - task: DotNetCoreCLI@2
+    displayName: Upload NuGet package to Azure Artifacts
     inputs:
-      command: publish
-      publishDirectory: '$(Build.ArtifactStagingDirectory)'
-      vstsFeedPublish: 'azure-devops-dotnet-project/hello-world-feed'
-      vstsFeedPackagePublish: 'hello-world'
-      versionOption: custom
-      versionPublish: '$(appVersion)'
-      packagePublishDescription: '.NET Hello World application'
+      command: push
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/nuget/*.nupkg'
+      nuGetFeedType: internal
+      publishVstsFeed: 'azure-devops-dotnet-project/hello-world-feed'
