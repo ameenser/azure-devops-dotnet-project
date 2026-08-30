@@ -21,6 +21,15 @@ steps:
       packageType: sdk
       version: '8.0.x'
 
+  - task: SonarQubePrepare@8
+    displayName: Prepare SonarQube analysis
+    inputs:
+      SonarQube: 'SonarQube-Local'
+      scannerMode: 'dotnet'
+      projectKey: 'azure-devops-dotnet-project'
+      projectName: 'azure-devops-dotnet-project'
+      projectVersion: '$(appVersion)'
+
   - script: |
       echo "Building application version: $(appVersion)"
     displayName: Print application version
@@ -37,6 +46,14 @@ steps:
       command: build
       projects: 'HelloWorld/HelloWorld.csproj'
       arguments: '--configuration $(buildConfiguration) --no-restore -p:Version=$(appVersion)'
+
+  - task: SonarQubeAnalyze@8
+    displayName: Run SonarQube analysis
+
+  - task: SonarQubePublish@8
+    displayName: Publish SonarQube Quality Gate
+    inputs:
+      pollingTimeoutSec: '300'
 
   - task: DotNetCoreCLI@2
     displayName: Publish application
